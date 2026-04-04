@@ -1,0 +1,67 @@
+services:
+  arcadedb:
+    image: arcadedata/arcadedb:latest
+    container_name: prism-arcadedb
+    ports:
+      - "2480:2480"   # HTTP / REST / Studio UI
+      - "2424:2424"   # Binary protocol
+    environment:
+      ARCADEDB_SERVER_ROOTPASSWORD: prism-dev-secret
+      JAVA_OPTS: >-
+        -Darcadedb.server.defaultDatabases=prism[root:prism-dev-secret]
+        -Darcadedb.server.plugins=GremlinServer:com.arcadedb.server.gremlin.GremlinServerPlugin
+    volumes:
+      - arcadedb-data:/home/arcadedb/databases
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:2480/api/v1/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: prism-kafka
+    ports:
+      - "9092:9092"   # External (host) access
+    environment:
+      # KRaft mode - no ZooKeeper
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_KRAFT_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      # Two listeners: EXTERNAL for host, INTERNAL for container-to-container
+      KAFKA_CFG_LISTENERS: EXTERNAL://:9092,INTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092,INTERNAL://kafka:9094
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_LOG_RETENTION_HOURS: 168
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD", "kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: prism-kafka-ui
+    ports:
+      - "8090:8080"   # Kafka UI at http://localhost:8090
+    environment:
+      KAFKA_CLUSTERS_0_NAME: prism-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9094
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  arcadedb-data:
+  kafka-data:

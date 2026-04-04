@@ -1,0 +1,13 @@
+{
+  "name": "@prism/agents",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Agent runtime - ingest agent and future agents",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  }
+}
