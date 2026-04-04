@@ -2,13 +2,54 @@
 
 This file provides guidance for AI assistants (Claude and others) working in this repository.
 
-## Project Overview
+## What This Is
 
-**Prism** is a project in its initial/bootstrapping phase. The repository currently contains only a README. All architectural decisions, tooling choices, and conventions are yet to be established.
+Prism is an agentic-native identity security platform. Not IGA with AI bolted on.
+Built from first principles around agents as the unit of governance.
 
-## Repository State
+## Core Architecture Decisions
 
-- **Status:** Empty / pre-implementation
+- **Agents replace connectors.** No scheduled jobs. No batch ETL.
+- **ArcadeDB** for the identity graph (Apache 2.0, built-in MCP server, native vector search)
+- **Kafka** for all inter-agent communication (event-driven end to end)
+- **MCP (Model Context Protocol)** for LLM-to-tool and LLM-to-database communication
+- **TypeScript / Node.js** as primary language
+- **Anthropic Claude** as the agent runtime (`claude-sonnet-4-6`)
+- **Fastify** for API layer
+- **React 18 + TypeScript** for UI
+
+## The Data Model Is Called Identograph
+
+Unified semantic graph. All identity types in one schema:
+human, non-human, AI agent, service account, API token, workload identity.
+ArcadeDB stores it. The MCP server on ArcadeDB lets agents query it directly.
+
+## Current Phase
+
+**Phase 1: Identograph Core**
+
+1. ArcadeDB running in Docker with full Prism schema
+2. All node types, edge types, property constraints defined
+3. Synthetic seed data (500 human, 200 service accounts, 50 agent identities)
+4. GraphQL read API over the graph
+
+## Full Spec
+
+See `/docs/prism_platform_spec.docx` for the complete platform architecture.
+
+## What We Do Not Do
+
+- No scheduled jobs anywhere in the platform
+- No batch aggregation
+- No connector libraries
+- No per-seat pricing model (this is outcome-based)
+
+## Writing Conventions
+
+- No em dashes in any documentation or code comments. Use regular dashes or rewrite the sentence.
+
+## Repository
+
 - **Main branch:** `main`
 - **Remote:** `prezidential/Prism` (GitHub)
 
@@ -42,22 +83,6 @@ Update README with setup instructions
 ```
 
 Avoid vague messages like "fix stuff" or "WIP".
-
-## Working in This Repo
-
-Since no implementation exists yet, the first meaningful contributions will likely involve:
-
-- Defining the tech stack and project structure
-- Adding dependency management (`package.json`, `pyproject.toml`, etc.)
-- Setting up linting, formatting, and testing tooling
-- Establishing the source directory layout (`src/`, `lib/`, etc.)
-
-When those decisions are made, update this file to document:
-- Build commands
-- Test commands
-- Code style conventions
-- Architecture overview
-- Environment variable requirements
 
 ## Updating This File
 
