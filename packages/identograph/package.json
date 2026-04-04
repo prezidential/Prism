@@ -8,6 +8,16 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "migrate": "tsx src/migrations/runner.ts",
+    "seed": "tsx src/seed/index.ts"
+  },
+  "dependencies": {
+    "@faker-js/faker": "^9.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }

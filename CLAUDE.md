@@ -35,28 +35,81 @@ ArcadeDB stores it. The MCP server on ArcadeDB lets agents query it directly.
 
 ## Full Spec
 
-See `/docs/prism_platform_spec.docx` for the complete platform architecture.
+See `/docs/prismspec.md` for the complete platform architecture.
 
 ## Monorepo Structure
 
 ```
 prism/
 - packages/
-  - identograph/    ArcadeDB schema, migrations, seed data
-    - src/schema/       vertex/edge type definitions
-    - src/migrations/   schema migration scripts
-    - src/seed/         synthetic data generators
-  - api/            Fastify + GraphQL API over the Identograph
-    - src/
-  - agents/         Agent runtime; ingest agent is first
-    - src/
-- docs/             Architecture specs and design documents
+  - identograph/         ArcadeDB schema, migrations, seed data
+    - src/schema/            TypeScript types + enums for all node/edge types
+    - src/migrations/        ArcadeDB DDL migration scripts + runner
+    - src/seed/              Synthetic data generators
+    - src/db/                ArcadeDB REST client
+  - api/                 Fastify + Mercurius GraphQL read API
+    - src/db/                ArcadeDB REST client (read-only)
+    - src/graphql/           Schema and resolvers
+  - agents/              Agent runtime (Phase 2+)
+- docs/                  Architecture specs (prismspec.md)
 - docker-compose.yml
-- package.json      npm workspaces root
-- tsconfig.json     Base TypeScript config (all packages extend this)
+- package.json           npm workspaces root
+- tsconfig.json          Base TypeScript config (all packages extend this)
 ```
 
 All packages are scoped as `@prism/<name>` and use `"type": "module"` (ESM).
+
+## Development Commands
+
+```bash
+# Infrastructure
+npm run infra:up      # Start ArcadeDB + Kafka + Kafka UI
+npm run infra:down    # Stop services (keep volumes)
+npm run infra:reset   # Wipe volumes and restart fresh
+npm run infra:logs    # Follow all service logs
+
+# Identograph
+npm run migrate       # Apply schema DDL to ArcadeDB (idempotent)
+npm run seed          # Load synthetic data (500 humans, 200 SA, 50 agents)
+
+# API
+npm run dev:api       # Start GraphQL API dev server on port 4000
+npm run build         # Compile all packages to dist/
+```
+
+## Key URLs (after infra:up)
+
+| Service | URL | Notes |
+|---|---|---|
+| ArcadeDB Studio | http://localhost:2480 | creds: `root` / `prism-dev-secret` |
+| Kafka UI | http://localhost:8090 | |
+| GraphQL API | http://localhost:4000/graphql | after `npm run dev:api` |
+| GraphiQL | http://localhost:4000/graphiql | interactive query explorer |
+
+## Identograph Schema
+
+12 vertex types: HumanIdentity, ServiceAccount, AgentIdentity, APIToken, WorkloadIdentity,
+DeviceIdentity, Application, Resource, Role, Policy, Group, OrgUnit
+
+10 edge types: HAS_ACCESS, ASSIGNED_ROLE, MEMBER_OF, REPORTS_TO, OWNS, SPAWNED, GOVERNS,
+PEER_OF, CREATED_BY, USED_BY
+
+All nodes carry a `tenantId` field. Seed data uses `tenantId: "prism-dev"`.
+
+## ArcadeDB Client
+
+Both packages use a thin fetch-based REST client (no external driver):
+- `packages/identograph/src/db/client.ts` - read/write (used by migrations and seed)
+- `packages/api/src/db/client.ts` - read-only (used by GraphQL resolvers)
+
+Connection is configured via environment variables:
+```
+ARCADEDB_URL=http://localhost:2480  (default)
+ARCADEDB_DB=prism                   (default)
+ARCADEDB_USER=root                  (default)
+ARCADEDB_PASS=prism-dev-secret      (default)
+PRISM_TENANT_ID=prism-dev           (default)
+```
 
 ## Infrastructure
 

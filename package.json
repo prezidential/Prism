@@ -6,7 +6,10 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build packages/*/tsconfig.json",
+    "build": "tsc --build packages/identograph/tsconfig.json packages/api/tsconfig.json",
+    "migrate": "npm run migrate --workspace=packages/identograph",
+    "seed": "npm run seed --workspace=packages/identograph",
+    "dev:api": "npm run dev --workspace=packages/api",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:reset": "docker compose down -v && docker compose up -d",
