@@ -62,6 +62,29 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  prism-okta-agent:
+    build:
+      context: .
+      dockerfile: packages/agents/Dockerfile
+    profiles: ["dev-okta"]
+    environment:
+      OKTA_DOMAIN: "${OKTA_DOMAIN:-dev-placeholder.okta.com}"
+      OKTA_API_TOKEN: "${OKTA_API_TOKEN:-placeholder}"
+      OKTA_WEBHOOK_SECRET: "${OKTA_WEBHOOK_SECRET:-placeholder}"
+      ARCADEDB_URL: "http://prism-arcadedb:2480"
+      ARCADEDB_DB: "prism"
+      ARCADEDB_USER: "root"
+      ARCADEDB_PASS: "prism-dev-secret"
+      KAFKA_BROKERS: "kafka:9094"
+      PRISM_TENANT_ID: "prism-dev"
+      SSD_ID: "okta-dev"
+    depends_on:
+      arcadedb:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   arcadedb-data:
   kafka-data:

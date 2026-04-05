@@ -6,13 +6,15 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "tsc --build packages/identograph/tsconfig.json packages/api/tsconfig.json",
+    "build": "tsc --build packages/identograph/tsconfig.json packages/api/tsconfig.json packages/agents/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "migrate": "npm run migrate --workspace=packages/identograph",
     "seed": "npm run seed --workspace=packages/identograph",
     "dev:api": "npm run dev --workspace=packages/api",
+    "dev:okta-agent": "npm run dev --workspace=packages/agents",
+    "topics:init": "tsx packages/agents/src/kafka/init-topics.ts",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down",
     "infra:reset": "docker compose down -v && docker compose up -d",

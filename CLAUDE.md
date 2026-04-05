@@ -111,6 +111,44 @@ ARCADEDB_PASS=prism-dev-secret      (default)
 PRISM_TENANT_ID=prism-dev           (default)
 ```
 
+## Phase 2: First Ingest Agent
+
+### Kafka Topics
+
+| Topic | Purpose |
+|---|---|
+| `identity.events.raw` | Raw events from ingest agents |
+| `identity.events.processed` | Confirmed writes to Identograph |
+| `audit.log` | Immutable audit trail |
+
+### @prism/agents Package Structure
+
+```
+packages/agents/src/
+  base/        IngestAgent interface
+  messages/    IdentityEventEnvelope + Okta payload types
+  kafka/       KafkaProducer, KafkaConsumer, topic definitions
+  ssd/         Source System Definition YAML parser and loader
+  correlation/ Identity correlation engine (exact match)
+  graph/       GraphWriteService (transactional upserts)
+  okta/        Okta REST client, ingest agent, webhook listener
+```
+
+### SSD Files
+
+Source System Definition YAML files live in `packages/agents/ssd/`.
+See `packages/agents/ssd/okta-dev.yaml` for the Okta example.
+
+### Key Environment Variables (Phase 2)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `KAFKA_BROKERS` | `localhost:9092` | Comma-separated broker list |
+| `OKTA_DOMAIN` | - | Okta tenant domain |
+| `OKTA_API_TOKEN` | - | Okta SSWS token |
+| `OKTA_WEBHOOK_SECRET` | - | HMAC secret for webhook verification |
+| `SSD_PATH` | - | Path to SSD YAML file |
+
 ## Testing
 
 Every phase of the build must have a full automated test suite. Tests run with Vitest and live
@@ -214,7 +252,7 @@ git push -u origin <branch-name>
 1. Create or switch to the task branch
 2. Make changes with focused, descriptive commits
 3. Push to the remote branch when complete
-4. Open a PR only when explicitly requested
+4. Open a PR automatically when development is done (no need to ask)
 
 ### Commit Message Style
 
