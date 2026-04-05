@@ -8,6 +8,22 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc --watch"
+    "dev": "tsx watch src/okta/agent.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@prism/identograph": "*",
+    "kafkajs": "^2.2.4",
+    "js-yaml": "^4.1.0",
+    "fastify": "^5.2.1",
+    "@fastify/formbody": "^8.0.1",
+    "uuid": "^11.0.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "@types/js-yaml": "^4.0.9",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
   }
 }
