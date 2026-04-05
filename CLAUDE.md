@@ -111,6 +111,44 @@ ARCADEDB_PASS=prism-dev-secret      (default)
 PRISM_TENANT_ID=prism-dev           (default)
 ```
 
+## Testing
+
+Every phase of the build must have a full automated test suite. Tests run with Vitest and live
+alongside the source code in `src/**/__tests__/` directories.
+
+```bash
+npm test              # run all tests across all packages (vitest workspace)
+npm run test:watch    # watch mode
+```
+
+### Test locations
+
+| Package | Test file | What it covers |
+|---|---|---|
+| identograph | `src/schema/__tests__/enums.test.ts` | All enum values and counts match the spec |
+| identograph | `src/migrations/__tests__/migration.test.ts` | DDL completeness, IF NOT EXISTS guards, tenantId coverage |
+| identograph | `src/db/__tests__/client.test.ts` | ArcadeDB client: query, command, insertVertex, escape, error handling |
+| identograph | `src/seed/__tests__/generators.test.ts` | Generator counts, field validity, referential integrity between edges and nodes |
+| api | `src/graphql/__tests__/schema.test.ts` | GraphQL schema builds, all 12 node types present, all query fields present |
+| api | `src/graphql/__tests__/resolvers.test.ts` | Resolver logic with mocked DB: filtering, pagination, SQL shape, type resolution |
+| api | `src/__tests__/server.test.ts` | Fastify integration: health, introspection, stats, humans, agents, GraphiQL |
+
+### Test conventions
+
+- **Framework:** Vitest. All test files end in `.test.ts` and live under `src/**/__tests__/`.
+- **Isolation:** Unit tests mock all external I/O (fetch, DB) with `vi.fn()` / `vi.stubGlobal`. No network calls in unit tests.
+- **Integration tests** (server tests) use `fastify.inject()` - no real network, no real DB.
+- **No `any` in tests** - type all mocks and assertions explicitly.
+- **Test names** describe the contract, not the implementation: "returns null when not found", not "calls db.query once".
+- **Each new Phase must add tests** before code ships. Tests are not optional.
+- Test files are excluded from the TypeScript build output (not emitted to `dist/`).
+
+### Adding tests for a new phase
+
+1. Create `src/**/__tests__/<module>.test.ts` inside the relevant package
+2. Mock external dependencies (DB, Kafka, external HTTP) - never call live services in unit/integration tests
+3. Run `npm test` to verify all existing tests still pass before opening a PR
+
 ## Infrastructure
 
 Services are defined in `docker-compose.yml`:

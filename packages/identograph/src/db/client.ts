@@ -17,7 +17,7 @@ export function defaultConfig(): ArcadeConfig {
   };
 }
 
-export interface QueryResult<T = unknown> {
+interface ArcadeResponse<T = unknown> {
   result: T[];
 }
 
@@ -32,8 +32,8 @@ export class ArcadeClient {
     this.queryUrl = `${config.url}/api/v1/query/${config.database}`;
   }
 
-  // Execute a write or DDL command (SQL, Gremlin, or Cypher)
-  async command<T = unknown>(sql: string, language = "sql"): Promise<QueryResult<T>> {
+  // Execute a write or DDL command (SQL, Gremlin, or Cypher). Returns result rows.
+  async command<T = unknown>(sql: string, language = "sql"): Promise<T[]> {
     const res = await fetch(this.commandUrl, {
       method: "POST",
       headers: {
@@ -48,11 +48,12 @@ export class ArcadeClient {
       throw new Error(`ArcadeDB command failed (HTTP ${res.status}): ${body}\nSQL: ${sql}`);
     }
 
-    return res.json() as Promise<QueryResult<T>>;
+    const data = (await res.json()) as ArcadeResponse<T>;
+    return data.result;
   }
 
-  // Execute a read-only query
-  async query<T = unknown>(sql: string, language = "sql"): Promise<QueryResult<T>> {
+  // Execute a read-only query. Returns result rows.
+  async query<T = unknown>(sql: string, language = "sql"): Promise<T[]> {
     const res = await fetch(this.queryUrl, {
       method: "POST",
       headers: {
@@ -67,23 +68,23 @@ export class ArcadeClient {
       throw new Error(`ArcadeDB query failed (HTTP ${res.status}): ${body}\nSQL: ${sql}`);
     }
 
-    return res.json() as Promise<QueryResult<T>>;
+    const data = (await res.json()) as ArcadeResponse<T>;
+    return data.result;
   }
 
-  // Insert a vertex and return it. Properties are passed as a params map
-  // to avoid SQL injection via string interpolation.
+  // Insert a vertex and return it.
   async insertVertex<T = unknown>(type: string, props: Record<string, unknown>): Promise<T> {
     const entries = Object.entries(props).filter(([, v]) => v !== undefined && v !== null);
     const cols = entries.map(([k]) => `\`${k}\``).join(", ");
     const vals = entries.map(([, v]) => this.sqlLiteral(v)).join(", ");
     const sql = `INSERT INTO ${type} (${cols}) VALUES (${vals}) RETURN @this`;
-    const result = await this.command<T>(sql);
-    const first = result.result[0];
+    const rows = await this.command<T>(sql);
+    const first = rows[0];
     if (first === undefined) throw new Error(`INSERT into ${type} returned no record`);
     return first;
   }
 
-  // Insert an edge between two vertices identified by their `id` property
+  // Insert an edge between two vertices identified by their `id` property.
   async insertEdge(
     edgeType: string,
     fromType: string,
@@ -108,12 +109,17 @@ export class ArcadeClient {
     await this.command(sql);
   }
 
-  // Count rows in a vertex type
+  // Count rows in a vertex type for a given tenant.
   async count(type: string, tenantId: string): Promise<number> {
-    const result = await this.query<{ count: number }>(
+    const rows = await this.query<{ count: number }>(
       `SELECT count(*) as count FROM ${type} WHERE tenantId = ${this.sqlLiteral(tenantId)}`,
     );
-    return result.result[0]?.count ?? 0;
+    return rows[0]?.count ?? 0;
+  }
+
+  // Escape a string value for safe inline SQL embedding.
+  escape(value: string): string {
+    return `'${value.replace(/'/g, "\\'")}'`;
   }
 
   private sqlLiteral(value: unknown): string {
@@ -126,7 +132,6 @@ export class ArcadeClient {
     if (typeof value === "object") {
       return `'${JSON.stringify(value).replace(/'/g, "\\'")}'`;
     }
-    // string - escape single quotes
     return `'${String(value).replace(/'/g, "\\'")}'`;
   }
 }

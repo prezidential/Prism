@@ -8,13 +8,13 @@ import { makeResolvers } from "./graphql/resolvers/identity.js";
 const PORT = Number(process.env["PORT"] ?? 4000);
 const HOST = process.env["HOST"] ?? "0.0.0.0";
 
-export async function buildServer() {
+export async function buildServer(db?: ArcadeClient) {
   const app = Fastify({ logger: { level: process.env["LOG_LEVEL"] ?? "info" } });
 
   await app.register(cors, { origin: true });
 
-  const db = new ArcadeClient(defaultConfig());
-  const resolvers = makeResolvers(db);
+  const client = db ?? new ArcadeClient(defaultConfig());
+  const resolvers = makeResolvers(client);
 
   await app.register(mercurius, {
     schema: typeDefs,
