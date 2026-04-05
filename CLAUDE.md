@@ -252,7 +252,7 @@ git push -u origin <branch-name>
 1. Create or switch to the task branch
 2. Make changes with focused, descriptive commits
 3. Push to the remote branch when complete
-4. Open a PR only when explicitly requested
+4. Open a PR automatically when development is done (no need to ask)
 
 ### Commit Message Style
 
