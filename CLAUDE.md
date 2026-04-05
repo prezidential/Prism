@@ -35,28 +35,119 @@ ArcadeDB stores it. The MCP server on ArcadeDB lets agents query it directly.
 
 ## Full Spec
 
-See `/docs/prism_platform_spec.docx` for the complete platform architecture.
+See `/docs/prismspec.md` for the complete platform architecture.
 
 ## Monorepo Structure
 
 ```
 prism/
 - packages/
-  - identograph/    ArcadeDB schema, migrations, seed data
-    - src/schema/       vertex/edge type definitions
-    - src/migrations/   schema migration scripts
-    - src/seed/         synthetic data generators
-  - api/            Fastify + GraphQL API over the Identograph
-    - src/
-  - agents/         Agent runtime; ingest agent is first
-    - src/
-- docs/             Architecture specs and design documents
+  - identograph/         ArcadeDB schema, migrations, seed data
+    - src/schema/            TypeScript types + enums for all node/edge types
+    - src/migrations/        ArcadeDB DDL migration scripts + runner
+    - src/seed/              Synthetic data generators
+    - src/db/                ArcadeDB REST client
+  - api/                 Fastify + Mercurius GraphQL read API
+    - src/db/                ArcadeDB REST client (read-only)
+    - src/graphql/           Schema and resolvers
+  - agents/              Agent runtime (Phase 2+)
+- docs/                  Architecture specs (prismspec.md)
 - docker-compose.yml
-- package.json      npm workspaces root
-- tsconfig.json     Base TypeScript config (all packages extend this)
+- package.json           npm workspaces root
+- tsconfig.json          Base TypeScript config (all packages extend this)
 ```
 
 All packages are scoped as `@prism/<name>` and use `"type": "module"` (ESM).
+
+## Development Commands
+
+```bash
+# Infrastructure
+npm run infra:up      # Start ArcadeDB + Kafka + Kafka UI
+npm run infra:down    # Stop services (keep volumes)
+npm run infra:reset   # Wipe volumes and restart fresh
+npm run infra:logs    # Follow all service logs
+
+# Identograph
+npm run migrate       # Apply schema DDL to ArcadeDB (idempotent)
+npm run seed          # Load synthetic data (500 humans, 200 SA, 50 agents)
+
+# API
+npm run dev:api       # Start GraphQL API dev server on port 4000
+npm run build         # Compile all packages to dist/
+```
+
+## Key URLs (after infra:up)
+
+| Service | URL | Notes |
+|---|---|---|
+| ArcadeDB Studio | http://localhost:2480 | creds: `root` / `prism-dev-secret` |
+| Kafka UI | http://localhost:8090 | |
+| GraphQL API | http://localhost:4000/graphql | after `npm run dev:api` |
+| GraphiQL | http://localhost:4000/graphiql | interactive query explorer |
+
+## Identograph Schema
+
+12 vertex types: HumanIdentity, ServiceAccount, AgentIdentity, APIToken, WorkloadIdentity,
+DeviceIdentity, Application, Resource, Role, Policy, Group, OrgUnit
+
+10 edge types: HAS_ACCESS, ASSIGNED_ROLE, MEMBER_OF, REPORTS_TO, OWNS, SPAWNED, GOVERNS,
+PEER_OF, CREATED_BY, USED_BY
+
+All nodes carry a `tenantId` field. Seed data uses `tenantId: "prism-dev"`.
+
+## ArcadeDB Client
+
+Both packages use a thin fetch-based REST client (no external driver):
+- `packages/identograph/src/db/client.ts` - read/write (used by migrations and seed)
+- `packages/api/src/db/client.ts` - read-only (used by GraphQL resolvers)
+
+Connection is configured via environment variables:
+```
+ARCADEDB_URL=http://localhost:2480  (default)
+ARCADEDB_DB=prism                   (default)
+ARCADEDB_USER=root                  (default)
+ARCADEDB_PASS=prism-dev-secret      (default)
+PRISM_TENANT_ID=prism-dev           (default)
+```
+
+## Testing
+
+Every phase of the build must have a full automated test suite. Tests run with Vitest and live
+alongside the source code in `src/**/__tests__/` directories.
+
+```bash
+npm test              # run all tests across all packages (vitest workspace)
+npm run test:watch    # watch mode
+```
+
+### Test locations
+
+| Package | Test file | What it covers |
+|---|---|---|
+| identograph | `src/schema/__tests__/enums.test.ts` | All enum values and counts match the spec |
+| identograph | `src/migrations/__tests__/migration.test.ts` | DDL completeness, IF NOT EXISTS guards, tenantId coverage |
+| identograph | `src/db/__tests__/client.test.ts` | ArcadeDB client: query, command, insertVertex, escape, error handling |
+| identograph | `src/seed/__tests__/generators.test.ts` | Generator counts, field validity, referential integrity between edges and nodes |
+| api | `src/graphql/__tests__/schema.test.ts` | GraphQL schema builds, all 12 node types present, all query fields present |
+| api | `src/graphql/__tests__/resolvers.test.ts` | Resolver logic with mocked DB: filtering, pagination, SQL shape, type resolution |
+| api | `src/__tests__/server.test.ts` | Fastify integration: health, introspection, stats, humans, agents, GraphiQL |
+
+### Test conventions
+
+- **Framework:** Vitest. All test files end in `.test.ts` and live under `src/**/__tests__/`.
+- **Isolation:** Unit tests mock all external I/O (fetch, DB) with `vi.fn()` / `vi.stubGlobal`. No network calls in unit tests.
+- **Integration tests** (server tests) use `fastify.inject()` - no real network, no real DB.
+- **No `any` in tests** - type all mocks and assertions explicitly.
+- **Test names** describe the contract, not the implementation: "returns null when not found", not "calls db.query once".
+- **Each new Phase must add tests** before code ships. Tests are not optional.
+- Test files are excluded from the TypeScript build output (not emitted to `dist/`).
+
+### Adding tests for a new phase
+
+1. Create `src/**/__tests__/<module>.test.ts` inside the relevant package
+2. Mock external dependencies (DB, Kafka, external HTTP) - never call live services in unit/integration tests
+3. Run `npm test` to verify all existing tests still pass before opening a PR
 
 ## Infrastructure
 
