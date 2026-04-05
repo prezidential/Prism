@@ -1,0 +1,32 @@
+# Source System Definition for Okta (development)
+id: okta-dev
+version: "1.0.0"
+displayName: "Okta (Development)"
+sourceType: okta
+tenantId: prism-dev
+enabled: true
+
+connection:
+  domain: "${OKTA_DOMAIN}"
+  tokenEnv: "OKTA_API_TOKEN"
+
+sync:
+  fullSyncIntervalHours: 1
+  webhookEnabled: true
+  webhookSecret: "${OKTA_WEBHOOK_SECRET}"
+
+mapping:
+  userStatusMap:
+    ACTIVE: active
+    INACTIVE: inactive
+    DEPROVISIONED: inactive
+    SUSPENDED: suspended
+    LOCKED_OUT: suspended
+    PASSWORD_EXPIRED: pending_review
+
+filters:
+  # Only sync users from these Okta groups (empty = sync all)
+  groups: []
+  # Exclude deprovisioned users from sync
+  excludeStatuses:
+    - DEPROVISIONED
