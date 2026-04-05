@@ -1,4 +1,4 @@
-import type { ArcadeClient } from "@prism/identograph";
+import type { ArcadeClient } from "@prism/identograph/dist/db/client.js";
 
 export type CorrelationMatchType =
   | "exact_email"
