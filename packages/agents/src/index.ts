@@ -18,4 +18,11 @@ export * from "./ssd/loader.js";
 // Correlation
 export * from "./correlation/engine.js";
 
-// Note: graph/ and okta/ exports will be added by Dev 2
+// Graph write service
+export * from "./graph/write-service.js";
+
+// Okta
+export * from "./okta/client.js";
+export * from "./okta/mapper.js";
+export * from "./okta/webhook.js";
+export * from "./okta/agent.js";

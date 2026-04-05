@@ -107,11 +107,11 @@ export class OktaClient {
     }
 
     while (url) {
-      const { data, nextUrl } = await this.get<OktaApiUser[]>(url);
-      for (const user of data) {
+      const result: { data: OktaApiUser[]; nextUrl: string | null } = await this.get<OktaApiUser[]>(url);
+      for (const user of result.data) {
         yield user;
       }
-      url = nextUrl;
+      url = result.nextUrl;
       if (url) {
         await this.sleep(this.minIntervalMs);
       }
@@ -134,11 +134,11 @@ export class OktaClient {
     let url: string | null = `${this.baseUrl}/api/v1/groups?limit=200`;
 
     while (url) {
-      const { data, nextUrl } = await this.get<OktaApiGroup[]>(url);
-      for (const group of data) {
+      const result: { data: OktaApiGroup[]; nextUrl: string | null } = await this.get<OktaApiGroup[]>(url);
+      for (const group of result.data) {
         yield group;
       }
-      url = nextUrl;
+      url = result.nextUrl;
       if (url) {
         await this.sleep(this.minIntervalMs);
       }
@@ -149,11 +149,11 @@ export class OktaClient {
     let url: string | null = `${this.baseUrl}/api/v1/groups/${encodeURIComponent(groupId)}/users?limit=200`;
 
     while (url) {
-      const { data, nextUrl } = await this.get<OktaApiUser[]>(url);
-      for (const user of data) {
+      const result: { data: OktaApiUser[]; nextUrl: string | null } = await this.get<OktaApiUser[]>(url);
+      for (const user of result.data) {
         yield user;
       }
-      url = nextUrl;
+      url = result.nextUrl;
       if (url) {
         await this.sleep(this.minIntervalMs);
       }
