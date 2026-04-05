@@ -1,53 +1,45 @@
-import { describe, it, expect, vi, beforeEach, type MockInstance } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// Mock kafkajs before importing the producer
+const mockSend = vi.fn().mockResolvedValue(undefined);
+const mockProducerConnect = vi.fn().mockResolvedValue(undefined);
+const mockProducerDisconnect = vi.fn().mockResolvedValue(undefined);
+
+const mockProducerInstance = {
+  connect: mockProducerConnect,
+  disconnect: mockProducerDisconnect,
+  send: mockSend,
+};
+
+const mockKafkaProducerFactory = vi.fn().mockReturnValue(mockProducerInstance);
+
 vi.mock("kafkajs", () => {
-  const mockSend = vi.fn().mockResolvedValue(undefined);
-  const mockConnect = vi.fn().mockResolvedValue(undefined);
-  const mockDisconnect = vi.fn().mockResolvedValue(undefined);
-
-  const mockProducer = {
-    connect: mockConnect,
-    disconnect: mockDisconnect,
-    send: mockSend,
+  return {
+    Kafka: class MockKafka {
+      producer() {
+        return mockKafkaProducerFactory();
+      }
+    },
   };
-
-  const MockKafka = vi.fn().mockImplementation(() => ({
-    producer: vi.fn().mockReturnValue(mockProducer),
-  }));
-
-  return { Kafka: MockKafka };
 });
 
 import { KafkaProducer } from "../producer.js";
 import { TOPICS } from "../topics.js";
 import { buildEnvelope } from "../../messages/envelope.js";
 
-// Access the mocked kafkajs internals
-async function getMockProducer() {
-  const kafkajs = await import("kafkajs");
-  const KafkaMock = kafkajs.Kafka as unknown as ReturnType<typeof vi.fn>;
-  const kafkaInstance = KafkaMock.mock.results[0]?.value as {
-    producer: ReturnType<typeof vi.fn>;
-  };
-  return kafkaInstance.producer.mock.results[0]?.value as {
-    connect: MockInstance;
-    disconnect: MockInstance;
-    send: MockInstance;
-  };
-}
-
 describe("KafkaProducer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockKafkaProducerFactory.mockReturnValue(mockProducerInstance);
+    mockProducerConnect.mockResolvedValue(undefined);
+    mockProducerDisconnect.mockResolvedValue(undefined);
+    mockSend.mockResolvedValue(undefined);
   });
 
   it("connect() calls the underlying kafkajs producer connect() exactly once", async () => {
     const producer = new KafkaProducer({ brokers: ["localhost:9092"], clientId: "test" });
     await producer.connect();
 
-    const mock = await getMockProducer();
-    expect(mock.connect).toHaveBeenCalledTimes(1);
+    expect(mockProducerConnect).toHaveBeenCalledTimes(1);
   });
 
   it("publish() sends message to correct topic with JSON-serialized envelope value", async () => {
@@ -66,9 +58,11 @@ describe("KafkaProducer", () => {
 
     await producer.publish(TOPICS.IDENTITY_EVENTS_RAW, envelope);
 
-    const mock = await getMockProducer();
-    expect(mock.send).toHaveBeenCalledTimes(1);
-    const callArgs = mock.send.mock.calls[0]?.[0] as { topic: string; messages: Array<{ value: string }> };
+    expect(mockSend).toHaveBeenCalledTimes(1);
+    const callArgs = mockSend.mock.calls[0]?.[0] as {
+      topic: string;
+      messages: Array<{ value: string }>;
+    };
     expect(callArgs.topic).toBe(TOPICS.IDENTITY_EVENTS_RAW);
     expect(JSON.parse(callArgs.messages[0]?.value ?? "{}")).toEqual(envelope);
   });
@@ -89,8 +83,7 @@ describe("KafkaProducer", () => {
 
     await producer.publish(TOPICS.IDENTITY_EVENTS_RAW, envelope, { key: "user-123" });
 
-    const mock = await getMockProducer();
-    const callArgs = mock.send.mock.calls[0]?.[0] as {
+    const callArgs = mockSend.mock.calls[0]?.[0] as {
       messages: Array<{ key: string | undefined }>;
     };
     expect(callArgs.messages[0]?.key).toBe("user-123");
@@ -101,8 +94,7 @@ describe("KafkaProducer", () => {
     await producer.connect();
     await producer.disconnect();
 
-    const mock = await getMockProducer();
-    expect(mock.disconnect).toHaveBeenCalledTimes(1);
+    expect(mockProducerDisconnect).toHaveBeenCalledTimes(1);
   });
 
   it("publish() throws if called before connect()", async () => {

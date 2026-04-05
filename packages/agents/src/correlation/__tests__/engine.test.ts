@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CorrelationEngine, type CorrelationCandidate } from "../engine.js";
-import type { ArcadeClient } from "@prism/identograph";
+import type { ArcadeClient } from "@prism/identograph/dist/db/client.js";
 
 function makeMockDb(queryResults: Record<string, Array<{ id: string }>>): ArcadeClient {
   const mock = {

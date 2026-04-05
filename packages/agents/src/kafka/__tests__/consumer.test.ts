@@ -1,15 +1,25 @@
-import { describe, it, expect, vi, beforeEach, type MockInstance } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { IdentityEventEnvelope } from "../../messages/envelope.js";
 
-// We need to capture the eachMessage handler - use a module-level variable
-let capturedEachMessage: ((ctx: {
-  topic: string;
-  partition: number;
-  message: { value: Buffer | null; offset: string };
-}) => Promise<void>) | null = null;
+// We capture the eachMessage handler here so tests can invoke it
+let capturedEachMessage:
+  | ((ctx: {
+      topic: string;
+      partition: number;
+      message: { value: Buffer | null; offset: string };
+    }) => Promise<void>)
+  | null = null;
 
 const mockCommitOffsets = vi.fn().mockResolvedValue(undefined);
 const mockRun = vi.fn().mockImplementation(
-  async (opts: { eachMessage: typeof capturedEachMessage }) => {
+  async (opts: {
+    autoCommit: boolean;
+    eachMessage: (ctx: {
+      topic: string;
+      partition: number;
+      message: { value: Buffer | null; offset: string };
+    }) => Promise<void>;
+  }) => {
     capturedEachMessage = opts.eachMessage;
   },
 );
@@ -17,7 +27,7 @@ const mockSubscribeConsumer = vi.fn().mockResolvedValue(undefined);
 const mockConsumerConnect = vi.fn().mockResolvedValue(undefined);
 const mockConsumerDisconnect = vi.fn().mockResolvedValue(undefined);
 
-const mockConsumer = {
+const mockConsumerInstance = {
   connect: mockConsumerConnect,
   disconnect: mockConsumerDisconnect,
   subscribe: mockSubscribeConsumer,
@@ -25,21 +35,42 @@ const mockConsumer = {
   commitOffsets: mockCommitOffsets,
 };
 
+const mockKafkaConsumerFactory = vi.fn().mockReturnValue(mockConsumerInstance);
+
 vi.mock("kafkajs", () => {
-  const MockKafka = vi.fn().mockImplementation(() => ({
-    consumer: vi.fn().mockReturnValue(mockConsumer),
-  }));
-  return { Kafka: MockKafka };
+  return {
+    Kafka: class MockKafka {
+      consumer(_opts: { groupId: string }) {
+        return mockKafkaConsumerFactory();
+      }
+    },
+  };
 });
 
 import { KafkaConsumer } from "../consumer.js";
 import { TOPICS } from "../topics.js";
-import type { IdentityEventEnvelope } from "../../messages/envelope.js";
 
 describe("KafkaConsumer", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     capturedEachMessage = null;
+    mockKafkaConsumerFactory.mockReturnValue(mockConsumerInstance);
+    mockConsumerConnect.mockResolvedValue(undefined);
+    mockConsumerDisconnect.mockResolvedValue(undefined);
+    mockSubscribeConsumer.mockResolvedValue(undefined);
+    mockCommitOffsets.mockResolvedValue(undefined);
+    mockRun.mockImplementation(
+      async (opts: {
+        autoCommit: boolean;
+        eachMessage: (ctx: {
+          topic: string;
+          partition: number;
+          message: { value: Buffer | null; offset: string };
+        }) => Promise<void>;
+      }) => {
+        capturedEachMessage = opts.eachMessage;
+      },
+    );
   });
 
   it("subscribe() calls the underlying kafkajs consumer.run()", async () => {
@@ -86,7 +117,10 @@ describe("KafkaConsumer", () => {
     });
 
     expect(userHandler).toHaveBeenCalledTimes(1);
-    const [receivedEnvelope] = userHandler.mock.calls[0] as [IdentityEventEnvelope<unknown>, () => Promise<void>];
+    const [receivedEnvelope] = userHandler.mock.calls[0] as [
+      IdentityEventEnvelope<unknown>,
+      () => Promise<void>,
+    ];
     expect(receivedEnvelope).toEqual(envelope);
   });
 
