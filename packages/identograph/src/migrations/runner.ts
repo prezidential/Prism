@@ -32,9 +32,8 @@ async function waitForArcadeDB(maxAttempts = 20): Promise<void> {
   console.log(`Connecting to ArcadeDB at ${ARCADEDB_URL}...`);
   for (let i = 1; i <= maxAttempts; i++) {
     try {
-      const res = await fetch(`${ARCADEDB_URL}/api/v1/ready`, {
-        headers: { Authorization: `Basic ${AUTH}` },
-      });
+      // /api/v1/ready is a public health endpoint — no auth required
+      const res = await fetch(`${ARCADEDB_URL}/api/v1/ready`);
       if (res.ok) {
         console.log("ArcadeDB is ready.");
         return;

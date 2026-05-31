@@ -26,6 +26,10 @@ function baseVertexIndexes(type: string): string[] {
   return [`CREATE INDEX IF NOT EXISTS ON ${type} (tenantId, id) UNIQUE`];
 }
 
+function notUniqueIndex(type: string, fields: string): string {
+  return `CREATE INDEX IF NOT EXISTS ON ${type} (${fields}) NOTUNIQUE`;
+}
+
 function baseEdgeProps(type: string): string[] {
   return [
     `CREATE PROPERTY ${type}.tenantId IF NOT EXISTS STRING (mandatory true, notnull true)`,
@@ -48,7 +52,7 @@ export const statements: string[] = [
   "CREATE PROPERTY NHIdentity.expiresAt IF NOT EXISTS DATETIME",
   "CREATE PROPERTY NHIdentity.isRotationEnabled IF NOT EXISTS BOOLEAN",
   ...baseVertexIndexes("NHIdentity"),
-  "CREATE INDEX IF NOT EXISTS ON NHIdentity (tenantId, provider, kind)",
+  notUniqueIndex("NHIdentity", "tenantId, provider, kind"),
 
   // -------------------------------------------------------------------------
   // Entitlement — a permission or capability grantable to any identity
@@ -63,7 +67,7 @@ export const statements: string[] = [
   "CREATE PROPERTY Entitlement.isPrivileged IF NOT EXISTS BOOLEAN",
   "CREATE PROPERTY Entitlement.riskWeight IF NOT EXISTS FLOAT",
   ...baseVertexIndexes("Entitlement"),
-  "CREATE INDEX IF NOT EXISTS ON Entitlement (tenantId, isPrivileged)",
+  notUniqueIndex("Entitlement", "tenantId, isPrivileged"),
 
   // -------------------------------------------------------------------------
   // Session — an active or historical access session
@@ -80,7 +84,7 @@ export const statements: string[] = [
   "CREATE PROPERTY Session.mfaVerified IF NOT EXISTS BOOLEAN",
   "CREATE PROPERTY Session.revokedReason IF NOT EXISTS STRING",
   ...baseVertexIndexes("Session"),
-  "CREATE INDEX IF NOT EXISTS ON Session (tenantId, identityRef, state)",
+  notUniqueIndex("Session", "tenantId, identityRef, state"),
 
   // -------------------------------------------------------------------------
   // Delegation — a trust delegation from one identity to another
@@ -98,8 +102,8 @@ export const statements: string[] = [
   "CREATE PROPERTY Delegation.isTransitive IF NOT EXISTS BOOLEAN",
   "CREATE PROPERTY Delegation.depth IF NOT EXISTS INTEGER",
   ...baseVertexIndexes("Delegation"),
-  "CREATE INDEX IF NOT EXISTS ON Delegation (tenantId, fromIdentityRef)",
-  "CREATE INDEX IF NOT EXISTS ON Delegation (tenantId, toIdentityRef)",
+  notUniqueIndex("Delegation", "tenantId, fromIdentityRef"),
+  notUniqueIndex("Delegation", "tenantId, toIdentityRef"),
 
   // -------------------------------------------------------------------------
   // ExecutionEvent — a recorded action taken by an agent
@@ -115,9 +119,9 @@ export const statements: string[] = [
   "CREATE PROPERTY ExecutionEvent.correlationId IF NOT EXISTS STRING",
   "CREATE PROPERTY ExecutionEvent.executedAt IF NOT EXISTS DATETIME (mandatory true, notnull true)",
   ...baseVertexIndexes("ExecutionEvent"),
-  "CREATE INDEX IF NOT EXISTS ON ExecutionEvent (tenantId, agentRef)",
-  "CREATE INDEX IF NOT EXISTS ON ExecutionEvent (tenantId, correlationId)",
-  "CREATE INDEX IF NOT EXISTS ON ExecutionEvent (tenantId, withinDeclaredScope)",
+  notUniqueIndex("ExecutionEvent", "tenantId, agentRef"),
+  notUniqueIndex("ExecutionEvent", "tenantId, correlationId"),
+  notUniqueIndex("ExecutionEvent", "tenantId, withinDeclaredScope"),
 
   // -------------------------------------------------------------------------
   // RiskSignal — SSF/CAEP-modeled risk signal vertex
@@ -143,9 +147,9 @@ export const statements: string[] = [
   "CREATE PROPERTY RiskSignal.resolvedBy IF NOT EXISTS STRING",
   ...baseVertexIndexes("RiskSignal"),
   "CREATE INDEX IF NOT EXISTS ON RiskSignal (tenantId, jti) UNIQUE",
-  "CREATE INDEX IF NOT EXISTS ON RiskSignal (tenantId, subjectRef)",
-  "CREATE INDEX IF NOT EXISTS ON RiskSignal (tenantId, score)",
-  "CREATE INDEX IF NOT EXISTS ON RiskSignal (tenantId, caepEventType)",
+  notUniqueIndex("RiskSignal", "tenantId, subjectRef"),
+  notUniqueIndex("RiskSignal", "tenantId, score"),
+  notUniqueIndex("RiskSignal", "tenantId, caepEventType"),
 
   // -------------------------------------------------------------------------
   // Phase 1 edge types
