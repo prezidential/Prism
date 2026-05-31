@@ -3,15 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "services/*",
+    "tools/*"
   ],
   "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && npm run typecheck --workspaces --if-present 2>&1 | grep -v 'npm warn' || true",
     "build": "tsc --build packages/identograph/tsconfig.json packages/api/tsconfig.json packages/agents/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "migrate": "npm run migrate --workspace=packages/identograph",
     "seed": "npm run seed --workspace=packages/identograph",
+    "dev": "docker compose up -d",
     "dev:api": "npm run dev --workspace=packages/api",
     "dev:okta-agent": "npm run dev --workspace=packages/agents",
     "topics:init": "tsx packages/agents/src/kafka/init-topics.ts",
@@ -25,6 +29,8 @@
     "npm": ">=10.0.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^5.7.2",
     "vitest": "^4.1.2"
   }
 }
