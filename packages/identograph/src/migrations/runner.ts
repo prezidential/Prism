@@ -3,9 +3,10 @@
 // Each migration is idempotent (uses IF NOT EXISTS), so re-running is safe.
 
 import * as migration001 from "./001-initial-schema.js";
+import * as migration002 from "./002-phase1-identograph.js";
 
 const ARCADEDB_URL = process.env["ARCADEDB_URL"] ?? "http://localhost:2480";
-const ARCADEDB_DB = process.env["ARCADEDB_DB"] ?? "prism";
+const ARCADEDB_DB = process.env["ARCADEDB_DB"] ?? "idem";
 const ARCADEDB_USER = process.env["ARCADEDB_USER"] ?? "root";
 const ARCADEDB_PASS = process.env["ARCADEDB_PASS"] ?? "prism-dev-secret";
 
@@ -86,7 +87,7 @@ async function ensureDatabaseExists(): Promise<void> {
   }
 }
 
-const migrations = [migration001];
+const migrations = [migration001, migration002];
 
 async function run(): Promise<void> {
   await waitForArcadeDB();

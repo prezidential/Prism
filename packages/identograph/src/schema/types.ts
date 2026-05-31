@@ -1,10 +1,14 @@
 import type {
   AccessLevel,
+  CaepEventType,
   CredentialType,
   EdgeType,
   EmploymentType,
   IdentityStatus,
+  NHIdentityKind,
   NodeType,
+  SessionState,
+  SignalSeverity,
 } from "./enums.js";
 
 // ---------------------------------------------------------------------------
@@ -262,4 +266,147 @@ export type IdentityEdge =
   | GovernsEdge
   | PeerOfEdge
   | CreatedByEdge
-  | UsedByEdge;
+  | UsedByEdge
+  | HasEntitlementEdge
+  | DelegatesToEdge
+  | ExecutedByEdge
+  | OwnsResourceEdge
+  | TrustsEdge
+  | GeneratesSignalEdge;
+
+// ---------------------------------------------------------------------------
+// Phase 1 — Identograph Core vertex types
+// ---------------------------------------------------------------------------
+
+// Non-human identity: IAM users, service principals, managed identities, API keys
+export interface NHIdentity extends BaseNode {
+  nodeType: NodeType.NHIdentity;
+  kind: NHIdentityKind;
+  displayName: string;
+  provider: string;        // "aws" | "azure" | "gcp" | "okta" | ...
+  ownerRef?: string;       // -> HumanIdentity.id or AgentIdentity.id
+  lastRotatedAt?: string;
+  expiresAt?: string;
+  isRotationEnabled: boolean;
+}
+
+// A permission or capability that can be granted to an identity
+export interface Entitlement extends BaseNode {
+  nodeType: NodeType.Entitlement;
+  displayName: string;
+  description: string;
+  entitlementType: string; // "iam-policy" | "role" | "scope" | "permission" | ...
+  provider: string;
+  resourceRef?: string;    // -> Resource.id
+  isPrivileged: boolean;
+  riskWeight: number;      // 0.0–1.0 contribution to risk score
+}
+
+// An active or historical access session
+export interface Session extends BaseNode {
+  nodeType: NodeType.Session;
+  identityRef: string;     // -> any identity vertex id
+  identityType: string;    // which vertex class
+  startedAt: string;
+  endedAt?: string;
+  state: SessionState;
+  sourceIp?: string;
+  userAgent?: string;
+  mfaVerified: boolean;
+  revokedReason?: string;
+}
+
+// A trust delegation from one identity to another
+export interface Delegation extends BaseNode {
+  nodeType: NodeType.Delegation;
+  fromIdentityRef: string; // who delegated
+  fromIdentityType: string;
+  toIdentityRef: string;   // who received the delegation
+  toIdentityType: string;
+  scope: string[];         // what is delegated
+  grantedAt: string;
+  expiresAt?: string;
+  grantedBy: string;       // -> HumanIdentity.id
+  isTransitive: boolean;   // can the delegate further delegate?
+  depth: number;           // hops from original principal
+}
+
+// A recorded action taken by an agent identity
+export interface ExecutionEvent extends BaseNode {
+  nodeType: NodeType.ExecutionEvent;
+  agentRef: string;        // -> AgentIdentity.id
+  action: string;          // what the agent did
+  targetRef?: string;      // the resource or identity acted upon
+  targetType?: string;
+  outcome: "success" | "failure" | "denied";
+  withinDeclaredScope: boolean;
+  correlationId: string;   // links events in the same agent session
+  executedAt: string;
+}
+
+// A risk signal generated from Identograph traversal, modeled on SSF/CAEP SET
+export interface RiskSignal extends BaseNode {
+  nodeType: NodeType.RiskSignal;
+  // SSF Security Event Token (SET) fields
+  jti: string;             // JWT ID — unique signal identifier
+  iss: string;             // issuer component that generated this signal
+  iat: string;             // issued at (ISO8601)
+  // Subject — the identity this signal concerns
+  subjectRef: string;      // vertex id
+  subjectType: string;     // vertex class name
+  // CAEP event classification
+  caepEventType: CaepEventType;
+  eventTypeUri: string;    // full URI, e.g. https://schemas.openid.net/secevent/caep/event-type/risk-level-change
+  // Derived risk score
+  score: number;           // 0.0–1.0
+  severity: SignalSeverity;
+  // CAEP event payload (arbitrary per event type)
+  eventPayload: Record<string, unknown>;
+  resolvedAt?: string;
+  resolvedBy?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Phase 1 — Identograph Core edge types
+// ---------------------------------------------------------------------------
+
+export interface HasEntitlementEdge extends BaseEdge {
+  edgeType: EdgeType.HAS_ENTITLEMENT;
+  grantedAt: string;
+  grantedBy?: string;
+  expiresAt?: string;
+  isActive: boolean;
+}
+
+export interface DelegatesToEdge extends BaseEdge {
+  edgeType: EdgeType.DELEGATES_TO;
+  delegationRef: string;   // -> Delegation.id
+  scope: string[];
+  grantedAt: string;
+  expiresAt?: string;
+}
+
+export interface ExecutedByEdge extends BaseEdge {
+  edgeType: EdgeType.EXECUTED_BY;
+  executionEventRef: string; // -> ExecutionEvent.id
+  executedAt: string;
+}
+
+export interface OwnsResourceEdge extends BaseEdge {
+  edgeType: EdgeType.OWNS_RESOURCE;
+  since: string;
+  approvedBy?: string;
+}
+
+export interface TrustsEdge extends BaseEdge {
+  edgeType: EdgeType.TRUSTS;
+  trustLevel: "full" | "partial" | "conditional";
+  conditions?: string[];
+  establishedAt: string;
+}
+
+export interface GeneratesSignalEdge extends BaseEdge {
+  edgeType: EdgeType.GENERATES_SIGNAL;
+  signalRef: string;       // -> RiskSignal.id
+  generatedAt: string;
+}

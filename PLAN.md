@@ -43,28 +43,28 @@ curl localhost:2480         # ArcadeDB responds
 
 ---
 
-## Phase 1 — Identograph Core [ ]
+## Phase 1 — Identograph Core [DONE]
 
 **Weeks:** 2–3  
 **Primary Tool:** Claude Code (Agent Team)  
 **Branch:** `feature/phase-1-identograph`
 
 ### Deliverables
-- [ ] ArcadeDB schema initialization script (`src/graph/schema.ts`) — idempotent
-- [ ] All vertex classes: `HumanIdentity`, `AgentIdentity`, `NHIdentity`, `Resource`, `Entitlement`, `Session`, `Delegation`, `ExecutionEvent`, `RiskSignal`
-- [ ] All edge classes: `HAS_ENTITLEMENT`, `DELEGATES_TO`, `EXECUTED_BY`, `OWNS_RESOURCE`, `TRUSTS`, `GENERATES_SIGNAL`
-- [ ] Indexes on: `id`, `externalId`, `identityType`, `riskScore`, `createdAt`
-- [ ] `IdentographClient` class (`src/graph/client.ts`) — full CRUD + traversal interface
-- [ ] 6 traversal query files in `src/graph/queries/`:
+- [x] ArcadeDB schema initialization script (migration runner + migrations 001 + 002) — idempotent
+- [x] All vertex classes: `HumanIdentity`, `AgentIdentity`, `NHIdentity`, `Resource`, `Entitlement`, `Session`, `Delegation`, `ExecutionEvent`, `RiskSignal`
+- [x] All edge classes: `HAS_ENTITLEMENT`, `DELEGATES_TO`, `EXECUTED_BY`, `OWNS_RESOURCE`, `TRUSTS`, `GENERATES_SIGNAL`
+- [x] Indexes on: `id`, `riskScore`, `subjectRef`, `caepEventType`, `agentRef`, `correlationId`, and more
+- [x] `IdentographClient` class (`src/graph/client.ts`) — full CRUD + traversal interface
+- [x] 6 traversal query files in `src/graph/queries/`:
   - `access-lineage.ts` — who has access to what, and through what chain
   - `agent-scope.ts` — what is an agent declared to do vs. what it has actually done
   - `delegation-paths.ts` — full delegation chain from source to target
   - `risk-surface.ts` — all identities above a risk threshold with their contributing signals
   - `blast-radius.ts` — if this identity is compromised, what is accessible
   - `entitlement-overlap.ts` — cross-identity entitlement overlap detection
-- [ ] Seed data script (`src/graph/seed/index.ts`) — creates representative demo graph
-- [ ] Full test suite in `tests/graph/` — unit + integration stubs
-- [ ] `packages/identograph/index.ts` barrel export
+- [x] Seed data script (`src/seed/phase1-demo.ts`) — 21 vertices, 15 edges, exercises all 6 queries
+- [x] Full test suite — 234 passing tests across 24 test files
+- [x] `packages/identograph/src/index.ts` barrel export
 
 ### Success Criteria
 ```bash

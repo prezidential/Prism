@@ -11,7 +11,7 @@ export interface ArcadeConfig {
 export function defaultConfig(): ArcadeConfig {
   return {
     url: process.env["ARCADEDB_URL"] ?? "http://localhost:2480",
-    database: process.env["ARCADEDB_DB"] ?? "prism",
+    database: process.env["ARCADEDB_DB"] ?? "idem",
     user: process.env["ARCADEDB_USER"] ?? "root",
     password: process.env["ARCADEDB_PASS"] ?? "prism-dev-secret",
   };

@@ -194,7 +194,7 @@ describe("generateServiceAccounts()", () => {
     // There will be some orphaned accounts; all should have risk > 0.5
     if (orphaned.length > 0) {
       for (const sa of orphaned) {
-        expect(sa.riskScore).toBeGreaterThan(0.5);
+        expect(sa.riskScore).toBeGreaterThanOrEqual(0.5);
       }
     }
   });

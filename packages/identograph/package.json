@@ -9,8 +9,11 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
     "migrate": "tsx src/migrations/runner.ts",
-    "seed": "tsx src/seed/index.ts"
+    "seed": "tsx src/seed/index.ts",
+    "db:init": "tsx src/migrations/runner.ts",
+    "db:seed": "tsx src/seed/phase1-demo.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^9.3.0"
