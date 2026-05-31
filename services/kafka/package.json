@@ -1,0 +1,26 @@
+{
+  "name": "@prism/service-kafka",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kafka consumer/producer wrappers for identity event streaming",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.2"
+  }
+}
