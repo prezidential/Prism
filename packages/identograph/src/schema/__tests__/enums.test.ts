@@ -4,6 +4,7 @@ import {
   CredentialType,
   EdgeType,
   EmploymentType,
+  GrantSource,
   IdentityStatus,
   NodeType,
 } from "../enums.js";
@@ -110,5 +111,24 @@ describe("CredentialType", () => {
 describe("AccessLevel", () => {
   it("has exactly 4 access levels", () => {
     expect(Object.values(AccessLevel)).toHaveLength(4);
+  });
+});
+
+describe("GrantSource", () => {
+  it("has exactly 5 provenance sources", () => {
+    expect(Object.values(GrantSource)).toHaveLength(5);
+  });
+
+  it("includes all expected provenance sources", () => {
+    expect(GrantSource.BirthrightPolicy).toBe("BirthrightPolicy");
+    expect(GrantSource.AccessRequest).toBe("AccessRequest");
+    expect(GrantSource.ManualGrant).toBe("ManualGrant");
+    expect(GrantSource.Inherited).toBe("Inherited");
+    expect(GrantSource.Unknown).toBe("Unknown");
+  });
+
+  it("has no duplicate values", () => {
+    const values = Object.values(GrantSource);
+    expect(new Set(values).size).toBe(values.length);
   });
 });

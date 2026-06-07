@@ -53,7 +53,10 @@ export function generateServiceAccounts(
       updatedAt: past(faker.number.int({ min: 0, max: 30 })),
       status,
       riskScore: faker.number.float({
-        min: status === IdentityStatus.Orphaned ? 0.5 : 0.0,
+        // Orphaned accounts are *elevated* risk: strictly above 0.5. `min` is
+        // inclusive in faker, so 0.51 keeps the "> 0.5" invariant deterministic
+        // (0.5 could otherwise be drawn and fail an elevated-risk assertion).
+        min: status === IdentityStatus.Orphaned ? 0.51 : 0.0,
         max: status === IdentityStatus.Orphaned ? 0.95 : 0.4,
         fractionDigits: 2,
       }),

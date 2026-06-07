@@ -3,6 +3,7 @@ import type {
   CredentialType,
   EdgeType,
   EmploymentType,
+  GrantSource,
   IdentityStatus,
   NodeType,
 } from "./enums.js";
@@ -194,6 +195,12 @@ export interface HasAccessEdge extends BaseEdge {
   expiresAt?: string;
   accessLevel: AccessLevel;
   lastUsed?: string;
+  // Provenance — "why" this access exists.
+  grantSource?: GrantSource;
+  justification?: string;
+  policyRef?: string; // id of the Policy/Role node that authorized the grant
+  // Currency — "whether it's still true" for this specific access.
+  lastReviewedAt?: string;
 }
 
 export interface AssignedRoleEdge extends BaseEdge {
@@ -202,6 +209,10 @@ export interface AssignedRoleEdge extends BaseEdge {
   assignedBy?: string;
   expiresAt?: string;
   certifiedAt?: string;
+  // Provenance — "why" this role was assigned.
+  grantSource?: GrantSource;
+  justification?: string;
+  policyRef?: string;
 }
 
 export interface MemberOfEdge extends BaseEdge {
