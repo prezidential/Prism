@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NodeType, IdentityStatus, CredentialType } from "../../schema/enums.js";
+import { NodeType, IdentityStatus, CredentialType, GrantSource } from "../../schema/enums.js";
 import { generateAgentIdentities } from "../generators/agent-identity.js";
 import { generateHumans } from "../generators/human.js";
 import {
@@ -307,6 +307,25 @@ describe("generateHasAccess()", () => {
     const resourceIds = new Set(resources.map((r) => r.id));
     for (const edge of edges) {
       expect(resourceIds.has(edge.toId)).toBe(true);
+    }
+  });
+
+  it("every grant carries a valid provenance source (the 'why')", () => {
+    const edges = generateHasAccess(humans, serviceAccounts, agentIdentities, resources);
+    const valid = new Set(Object.values(GrantSource));
+    for (const edge of edges) {
+      expect(valid.has(edge.props.grantSource as GrantSource)).toBe(true);
+    }
+  });
+
+  it("grants with known provenance include a justification; Unknown ones do not", () => {
+    const edges = generateHasAccess(humans, serviceAccounts, agentIdentities, resources);
+    for (const edge of edges) {
+      if (edge.props.grantSource === GrantSource.Unknown) {
+        expect(edge.props.justification).toBeUndefined();
+      } else {
+        expect(typeof edge.props.justification).toBe("string");
+      }
     }
   });
 });

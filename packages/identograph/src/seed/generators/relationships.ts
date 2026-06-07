@@ -2,7 +2,7 @@
 // Produces: HAS_ACCESS, ASSIGNED_ROLE, MEMBER_OF, REPORTS_TO, OWNS, SPAWNED
 
 import { faker } from "@faker-js/faker";
-import { AccessLevel, EdgeType } from "../../schema/enums.js";
+import { AccessLevel, EdgeType, GrantSource } from "../../schema/enums.js";
 import type {
   AgentIdentity,
   Application,
@@ -28,6 +28,45 @@ function past(days: number): string {
 
 function future(days: number): string {
   return new Date(Date.now() + days * 86_400_000).toISOString();
+}
+
+const JUSTIFICATIONS: Record<GrantSource, string[]> = {
+  [GrantSource.BirthrightPolicy]: [
+    "Auto-provisioned by department birthright policy",
+    "Granted by role-based access policy on hire",
+  ],
+  [GrantSource.AccessRequest]: [
+    "Approved access request for project work",
+    "Requested for on-call rotation; approved by manager",
+    "Temporary elevation approved for incident response",
+  ],
+  [GrantSource.ManualGrant]: [
+    "Manually granted by administrator",
+    "Direct grant during system migration",
+  ],
+  [GrantSource.Inherited]: [
+    "Inherited via group membership",
+    "Inherited through nested role assignment",
+  ],
+  [GrantSource.Unknown]: [], // intentionally no justification — provenance was lost on ingest
+};
+
+/**
+ * Produce a realistic grant provenance ("why"). A minority of grants are
+ * Unknown — modeling the real-world access whose justification was never
+ * captured, which is exactly the unexamined history the platform exists to surface.
+ */
+function grantProvenance(): { grantSource: GrantSource; justification?: string } {
+  const grantSource = faker.helpers.weightedArrayElement([
+    { weight: 45, value: GrantSource.BirthrightPolicy },
+    { weight: 25, value: GrantSource.AccessRequest },
+    { weight: 12, value: GrantSource.ManualGrant },
+    { weight: 8, value: GrantSource.Inherited },
+    { weight: 10, value: GrantSource.Unknown },
+  ]);
+  const options = JUSTIFICATIONS[grantSource];
+  const justification = options.length > 0 ? faker.helpers.arrayElement(options) : undefined;
+  return { grantSource, justification };
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +123,7 @@ export function generateAssignedRoles(
           certifiedAt: faker.datatype.boolean({ probability: 0.7 })
             ? past(faker.number.int({ min: 1, max: 90 }))
             : undefined,
+          ...grantProvenance(),
           createdAt: past(assignedDaysAgo),
         },
       });
@@ -129,6 +169,10 @@ export function generateHasAccess(
           lastUsed: faker.datatype.boolean({ probability: 0.8 })
             ? past(faker.number.int({ min: 0, max: 30 }))
             : past(faker.number.int({ min: 90, max: 365 })),
+          ...grantProvenance(),
+          lastReviewedAt: faker.datatype.boolean({ probability: 0.6 })
+            ? past(faker.number.int({ min: 1, max: 180 }))
+            : undefined,
           createdAt: past(grantedDaysAgo),
         },
       });
@@ -155,6 +199,10 @@ export function generateHasAccess(
             { weight: 20, value: AccessLevel.Admin },
           ]),
           lastUsed: past(faker.number.int({ min: 0, max: 60 })),
+          ...grantProvenance(),
+          lastReviewedAt: faker.datatype.boolean({ probability: 0.5 })
+            ? past(faker.number.int({ min: 1, max: 180 }))
+            : undefined,
           createdAt: past(grantedDaysAgo),
         },
       });
@@ -177,6 +225,10 @@ export function generateHasAccess(
           grantedAt: past(grantedDaysAgo),
           accessLevel: AccessLevel.Read,
           lastUsed: past(faker.number.int({ min: 0, max: 7 })),
+          ...grantProvenance(),
+          lastReviewedAt: faker.datatype.boolean({ probability: 0.4 })
+            ? past(faker.number.int({ min: 1, max: 90 }))
+            : undefined,
           createdAt: past(grantedDaysAgo),
         },
       });

@@ -54,3 +54,17 @@ export enum AccessLevel {
   Admin = "Admin",
   Owner = "Owner",
 }
+
+/**
+ * Provenance of an access or role grant — the "why" behind an edge. This is what
+ * lets the graph answer not just who-has-what, but how that access came to exist,
+ * so AI layers reasoning over the graph can distinguish a deliberate, justified
+ * grant from an unexamined one ingested without context.
+ */
+export enum GrantSource {
+  BirthrightPolicy = "BirthrightPolicy", // auto-provisioned by a role/policy (RBAC/ABAC)
+  AccessRequest = "AccessRequest", // user-requested and approved
+  ManualGrant = "ManualGrant", // granted directly by an admin
+  Inherited = "Inherited", // received via group/role nesting
+  Unknown = "Unknown", // ingested without provenance metadata
+}
