@@ -3,9 +3,10 @@
 // Each migration is idempotent (uses IF NOT EXISTS), so re-running is safe.
 
 import * as migration001 from "./001-initial-schema.js";
+import * as migration002 from "./002-phase1-identograph.js";
 
 const ARCADEDB_URL = process.env["ARCADEDB_URL"] ?? "http://localhost:2480";
-const ARCADEDB_DB = process.env["ARCADEDB_DB"] ?? "prism";
+const ARCADEDB_DB = process.env["ARCADEDB_DB"] ?? "idem";
 const ARCADEDB_USER = process.env["ARCADEDB_USER"] ?? "root";
 const ARCADEDB_PASS = process.env["ARCADEDB_PASS"] ?? "prism-dev-secret";
 
@@ -31,9 +32,8 @@ async function waitForArcadeDB(maxAttempts = 20): Promise<void> {
   console.log(`Connecting to ArcadeDB at ${ARCADEDB_URL}...`);
   for (let i = 1; i <= maxAttempts; i++) {
     try {
-      const res = await fetch(`${ARCADEDB_URL}/api/v1/ready`, {
-        headers: { Authorization: `Basic ${AUTH}` },
-      });
+      // /api/v1/ready is a public health endpoint — no auth required
+      const res = await fetch(`${ARCADEDB_URL}/api/v1/ready`);
       if (res.ok) {
         console.log("ArcadeDB is ready.");
         return;
@@ -86,7 +86,7 @@ async function ensureDatabaseExists(): Promise<void> {
   }
 }
 
-const migrations = [migration001];
+const migrations = [migration001, migration002];
 
 async function run(): Promise<void> {
   await waitForArcadeDB();

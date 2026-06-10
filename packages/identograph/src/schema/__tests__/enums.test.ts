@@ -9,8 +9,8 @@ import {
 } from "../enums.js";
 
 describe("NodeType", () => {
-  it("has exactly 12 node types", () => {
-    expect(Object.values(NodeType)).toHaveLength(12);
+  it("has exactly 18 node types (12 Phase 0 + 6 Phase 1)", () => {
+    expect(Object.values(NodeType)).toHaveLength(18);
   });
 
   it("includes all 6 identity types", () => {
@@ -44,8 +44,8 @@ describe("NodeType", () => {
 });
 
 describe("EdgeType", () => {
-  it("has exactly 10 edge types", () => {
-    expect(Object.values(EdgeType)).toHaveLength(10);
+  it("has exactly 16 edge types (10 Phase 0 + 6 Phase 1)", () => {
+    expect(Object.values(EdgeType)).toHaveLength(16);
   });
 
   it("includes all spec-defined edge types", () => {
