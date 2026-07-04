@@ -5,5 +5,14 @@
     "rootDir": "src"
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/__tests__/**", "src/**/*.test.ts"]
+  // risk/entrypoint.ts and risk/bin.ts import the sibling @prism/risk-engine
+  // package by relative source path (the monorepo never builds package dist).
+  // That foreign source falls outside this package's rootDir, so those two
+  // boundary-crossing files are typechecked by the repo-root tsconfig instead.
+  "exclude": [
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/risk/entrypoint.ts",
+    "src/risk/bin.ts"
+  ]
 }

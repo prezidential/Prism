@@ -9,7 +9,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/okta/agent.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "risk:consume": "tsx --env-file=../../.env src/risk/bin.ts"
   },
   "dependencies": {
     "@prism/identograph": "*",
