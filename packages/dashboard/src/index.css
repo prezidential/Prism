@@ -100,3 +100,31 @@ input::placeholder { color: var(--text-dim); }
 .btn { background: var(--accent); color: #12060f; border: none; border-radius: 8px; padding: 8px 14px; font-weight: 600; cursor: pointer; font-size: 13px; }
 .btn.ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
 .btn:disabled { opacity: 0.4; cursor: default; }
+
+/* Phone / narrow screens: sidebar becomes a scrollable top bar, panels stack. */
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  .sidebar {
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .sidebar > div { margin-top: 0 !important; }
+  .brand { padding: 0 10px 0 4px; font-size: 16px; white-space: nowrap; }
+  .brand small { display: none; }
+  .nav-item { padding: 8px 10px; white-space: nowrap; }
+  .sidebar .btn.ghost { width: auto !important; white-space: nowrap; }
+  .main { padding: 16px 14px; }
+  .view-head { flex-direction: column; gap: 4px; align-items: flex-start; }
+  .two-col { grid-template-columns: 1fr; }
+  .wt-bar { left: 12px; right: 12px; bottom: 12px; flex-wrap: wrap; gap: 10px; }
+  .wt-bar .wt-body { flex-basis: 100%; }
+  table { font-size: 12px; }
+}
