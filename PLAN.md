@@ -134,27 +134,30 @@ npm run typecheck           # zero errors
 
 ---
 
-## Phase 4 — MCP Layer [ ]
+## Phase 4 — MCP Layer [IN PROGRESS]
 
 **Weeks:** 7–8  
 **Primary Tool:** Claude Code (subagents)  
-**Branch:** `feature/phase-4-mcp-layer`
+**Branch:** `feature/phase-4-mcp-layer` (delivered on `claude/resume-from-docs-pra0xz`)
 
 ### Deliverables
-- [ ] MCP server exposing Identograph as tools:
-  - `query_identity` — look up any identity by ID or attribute
-  - `traverse_access_lineage` — run access-lineage traversal
-  - `check_agent_scope` — validate agent action against declared scope
-  - `get_risk_signals` — retrieve risk signals for an identity
-  - `get_blast_radius` — compute blast radius for a given identity
-- [ ] ArcadeDB native MCP server wired up alongside custom tool layer
-- [ ] MCP server tested with Claude via `claude --mcp-server` flag
-- [ ] Tool response schemas documented in `docs/mcp-tools.md`
+- [x] MCP server (`packages/mcp-layer`, `@modelcontextprotocol/sdk`, stdio) exposing Identograph as tools:
+  - [x] `query_identity` — look up any identity by id or attribute
+  - [x] `traverse_access_lineage` — run access-lineage traversal
+  - [x] `check_agent_scope` — declared scope vs. observed ExecutionEvents
+  - [x] `get_risk_signals` — retrieve risk signals for an identity (+ `minScore` filter)
+  - [x] `get_blast_radius` — compute blast radius for a given identity
+- [x] SDK-free, injectable tool core (`IdentographPort`) with mock-based unit tests; live wiring quarantined to `server.ts`
+- [x] `npm run mcp:serve` entrypoint; end-to-end verified (server boots, MCP handshake, `tools/list` returns all five)
+- [x] Tool schemas documented in `docs/mcp-tools.md`; new dependency recorded in `docs/adr/0001-mcp-sdk.md`
+- [ ] ArcadeDB native MCP server wired alongside the custom layer — *deferred; the custom tool layer is the primary surface*
+- [ ] Drive tools against live ArcadeDB via `claude --mcp-server` — *manual step; needs seeded ArcadeDB*
 
 ### Success Criteria
 ```bash
-# Claude can successfully call check_agent_scope and get a typed response
-npm test -- tests/mcp       # all tool schemas validate
+npm run typecheck                  # zero errors
+npx vitest run packages/mcp-layer  # tool + schema + SDK-integration tests pass (15)
+npm run mcp:serve                  # server boots on stdio
 ```
 
 ---

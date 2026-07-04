@@ -5,5 +5,9 @@
     "rootDir": "src"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  // server.ts and bin.ts import the sibling @prism/identograph package by
+  // relative source path (the monorepo never builds package dist). That foreign
+  // source falls outside this package's rootDir, so those two boundary-crossing
+  // files are typechecked by the repo-root tsconfig instead, which has no rootDir.
+  "exclude": ["node_modules", "dist", "src/server.ts", "src/bin.ts"]
 }
