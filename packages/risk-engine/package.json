@@ -16,10 +16,12 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "risk:evaluate": "tsx --env-file=../../.env src/cli/evaluate.ts"
   },
   "devDependencies": {
     "@types/node": "^25.5.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^4.1.2"
   }

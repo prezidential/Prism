@@ -1,4 +1,8 @@
-import type { ArcadeClient } from "@prism/identograph/dist/db/client.js";
+// Minimal read surface of the Identograph client this engine depends on.
+// Declared structurally to avoid coupling to @prism/identograph build output.
+interface GraphReadClient {
+  query<T = unknown>(sql: string, language?: string): Promise<T[]>;
+}
 
 export type CorrelationMatchType =
   | "exact_email"
@@ -27,7 +31,7 @@ interface HumanIdentityRow {
 
 export class CorrelationEngine {
   constructor(
-    private readonly db: ArcadeClient,
+    private readonly db: GraphReadClient,
     private readonly tenantId: string,
   ) {}
 

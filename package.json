@@ -17,6 +17,7 @@
     "seed": "npm run seed --workspace=packages/identograph",
     "db:init": "npm run db:init --workspace=packages/identograph",
     "db:seed": "npm run db:seed --workspace=packages/identograph",
+    "risk:evaluate": "npm run risk:evaluate --workspace=packages/risk-engine",
     "dev": "docker compose up -d",
     "dev:api": "npm run dev --workspace=packages/api",
     "dev:okta-agent": "npm run dev --workspace=packages/agents",
