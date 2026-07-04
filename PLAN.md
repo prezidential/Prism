@@ -79,27 +79,27 @@ npm run typecheck           # zero errors
 
 ---
 
-## Phase 2 — Identity Ingestion Pipeline [ ]
+## Phase 2 — Identity Ingestion Pipeline [IN PROGRESS]
 
 **Weeks:** 3–4  
 **Primary Tool:** Claude Code + Cursor  
-**Branch:** `feature/phase-2-ingestion`
+**Branch:** `feature/phase-2-ingestion` (further work delivered on `claude/resume-from-docs-pra0xz`)
 
 ### Deliverables
-- [ ] Kafka consumer for identity events (`services/kafka/identity-consumer.ts`)
-- [ ] AWS IAM ingestor — reads IAM users, roles, policies → Identograph vertices/edges
-- [ ] Okta ingestor — reads users, groups, app assignments → Identograph vertices/edges
-- [ ] **Demo environment bridge** — reads `tools/demo-provisioner/state.json` → seeds Identograph using `seedId` fields as anchors
-- [ ] Normalization layer — maps provider-specific fields to Identograph schema
-- [ ] Reconciliation logic — upsert strategy (no duplicates on re-run)
-- [ ] Dead letter queue for failed events
-- [ ] Integration test: provision demo environment → run ingestion → verify graph populated
+- [x] Kafka consumer for identity events (`packages/agents/src/kafka/consumer.ts`)
+- [x] AWS IAM ingestor — IAM users/roles/policies → NHIdentity/Entitlement vertices + HAS_ENTITLEMENT edges (`src/aws/mapper.ts`, `src/aws/ingestor.ts`; source injected — live AWS SDK adapter is the only deferred piece)
+- [x] Okta ingestor — reads users, groups, app assignments → Identograph (`src/okta/*`)
+- [x] **Demo environment bridge** — reads `tools/demo-provisioner/state.json` → seeds Identograph using `seedId` fields as anchors (`src/demo/bridge.ts`)
+- [x] Normalization layer — provider mappers produce a shared `MappedGraph` (`src/ingest/graph-ops.ts`)
+- [x] Reconciliation logic — upsert strategy, idempotent on re-run (`applyMappedGraph` + `ArcadeGraphWriteService.upsertVertex/Edge`)
+- [x] Dead letter queue for failed events (`src/dlq/dead-letter-queue.ts`; per-item DLQ in `applyMappedGraph`)
+- [ ] Live integration test: provision demo environment → run ingestion → verify graph populated — *deferred; needs a running demo-provisioner + ArcadeDB (logic covered by unit tests with fixtures/mocks)*
 
 ### Success Criteria
 ```bash
-npm run ingest:demo         # reads demo-provisioner state → populates Identograph
-npm test -- tests/ingestion # all tests pass
-# ArcadeDB has vertices for all seeded demo AWS + Okta identities
+npm test -- packages/agents   # ingestion mapper/ingestor/bridge + DLQ tests pass
+npm run typecheck             # zero errors
+# Live: npm run ingest:demo against a seeded demo-provisioner + ArcadeDB
 ```
 
 ---
@@ -120,9 +120,9 @@ npm test -- tests/ingestion # all tests pass
 - [x] Composite aggregation — weighted noisy-OR over per-identity findings (`aggregate.ts`)
 - [x] Risk signal writer — materializes `RiskSignal` vertices as SSF/CAEP SETs (`signal-writer.ts`)
 - [x] Evaluation orchestrator — `evaluateRisk()` + `npm run risk:evaluate` CLI, persists composite scores back onto identity vertices (`evaluate.ts`, `cli/evaluate.ts`)
-- [x] Risk API data layer: `getRiskIdentities()` — identities sorted by risk score with contributing signals (`api/risk-identities.ts`). *HTTP route `GET /api/v1/risk/identities` deferred to the Phase 5 API layer.*
+- [x] Risk API data layer: `getRiskIdentities()` — identities sorted by risk score with contributing signals (`api/risk-identities.ts`). HTTP route `GET /api/v1/risk/identities` now delivered in the API layer (see Phase 5).
 - [x] Red-team scenario coverage — 31 unit + integration tests; `__tests__/evaluate.test.ts` exercises a graph that trips all five scorers end-to-end
-- [ ] Real-time risk evaluation on ingest events (Kafka consumer) — *deferred; depends on Phase 2 ingestion completion*
+- [x] Real-time risk evaluation on ingest events — `RiskEvaluationConsumer` re-evaluates a tenant's risk on identity events, with per-tenant coalescing + DLQ (`packages/agents/src/risk/consumer.ts`, `npm run risk:consume`)
 - [ ] Anomaly detection: behavioral baseline per identity, deviation alerts — *deferred*
 
 ### Success Criteria
@@ -169,8 +169,8 @@ npm run mcp:serve                  # server boots on stdio
 **Branch:** `feature/phase-5-api-layer`
 
 ### Deliverables
-- [ ] Fastify REST API with full OpenAPI spec
-- [ ] GraphQL API via Mercurius
+- [~] Fastify REST API — `GET /api/v1/risk/identities` delivered (`packages/api/src/routes/risk.ts`, injects risk-engine `getRiskIdentities`, `app.inject`-tested); full OpenAPI spec + remaining routes pending
+- [x] GraphQL API via Mercurius
 - [ ] Keycloak integration for auth
 - [ ] Rate limiting, request validation (Zod schemas)
 - [ ] Full API reference: `docs/api-reference.md` (auto-generated from route handlers)

@@ -26,3 +26,15 @@ export * from "./okta/client.js";
 export * from "./okta/mapper.js";
 export * from "./okta/webhook.js";
 export * from "./okta/agent.js";
+
+// Dead-letter queue
+export * from "./dlq/dead-letter-queue.js";
+
+// Real-time risk-evaluation consumer (entrypoint/bin excluded — see tsconfig)
+export * from "./risk/consumer.js";
+
+// Ingestion pipeline
+export * from "./ingest/graph-ops.js";
+export * from "./aws/mapper.js";
+export * from "./aws/ingestor.js";
+export * from "./demo/bridge.js";

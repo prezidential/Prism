@@ -65,8 +65,9 @@ interface SignalRow {
   eventPayload: unknown;
 }
 
+// Read-only: getRiskIdentities never issues writes, so it requires only `query`.
 export async function getRiskIdentities(
-  client: GraphClient,
+  client: Pick<GraphClient, "query">,
   tenantId: string,
   options: GetRiskIdentitiesOptions = {},
 ): Promise<RiskIdentity[]> {
