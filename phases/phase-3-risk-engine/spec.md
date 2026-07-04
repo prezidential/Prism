@@ -59,9 +59,38 @@ scope; a dormant privileged NHI sharing admin access with a peer and fanning out
 to a delegate). It asserts finding counts, which findings cross the signal
 threshold, score persistence, and that every scorer contributes.
 
+## Runtime model
+
+The risk engine is a **library**, not a batch job. Everything under
+`packages/risk-engine` is a pure function of the graph: `evaluateRisk()` and the
+individual scorers take a `GraphClient` and return findings/signals. That design
+is deliberate so the same engine can be driven by whatever calls it.
+
+`npm run risk:evaluate` (`cli/evaluate.ts`) is only a **developer / demo
+entrypoint** — a convenient way to score the current graph from a terminal. It is
+*not* how risk runs in production.
+
+In production the platform is continuous and ambient — risk re-evaluates as the
+Identograph changes, not on a cron or a manual command. The intended drivers of
+the same `evaluateRisk()` core are:
+
+1. **Event-driven consumer (primary).** A long-running service subscribes to the
+   Phase 2 identity event bus (Kafka). When an ingest/mutation event touches an
+   identity, it re-scores that identity (and its neighborhood) and writes the
+   resulting `RiskSignal`s / updated `riskScore` back to the graph in near-real
+   time. This is the "active running system." It is deferred here only because it
+   depends on Phase 2 ingestion being wired end-to-end.
+2. **On-demand API (Phase 5).** `getRiskIdentities()` already backs a future
+   `GET /api/v1/risk/identities`; the API layer can also trigger an ad-hoc
+   re-evaluation for a subject.
+
+So: the npm command is scaffolding for this phase. The real deployment target is
+the event-driven consumer, which reuses this exact engine unchanged.
+
 ## Deferred to later phases
 
 - HTTP route `GET /api/v1/risk/identities` → Phase 5 API layer (the data
   function `getRiskIdentities()` is delivered here).
-- Real-time evaluation on Kafka ingest events → depends on Phase 2 completion.
+- Real-time evaluation on Kafka ingest events (the primary runtime, see above)
+  → depends on Phase 2 completion.
 - Behavioral-baseline anomaly detection.
