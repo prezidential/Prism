@@ -8,6 +8,7 @@
 import { aggregateFindings } from "./aggregate.js";
 import type { GraphClient } from "./client.js";
 import { esc } from "./client.js";
+import { createBehavioralAnomalyScorer } from "./anomaly/behavioral-baseline.js";
 import { agentScopeDeviationScorer } from "./scoring/agent-scope-deviation.js";
 import { blastRadiusScorer } from "./scoring/blast-radius.js";
 import { delegationDepthScorer } from "./scoring/delegation-depth.js";
@@ -28,6 +29,7 @@ export function createDefaultScorers(now: string): RiskScorer[] {
     agentScopeDeviationScorer,
     entitlementOverlapScorer,
     blastRadiusScorer,
+    createBehavioralAnomalyScorer({ now }),
   ];
 }
 

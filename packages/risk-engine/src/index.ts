@@ -31,6 +31,11 @@ export { agentScopeDeviationScorer } from "./scoring/agent-scope-deviation.js";
 export { entitlementOverlapScorer } from "./scoring/entitlement-overlap.js";
 export { blastRadiusScorer } from "./scoring/blast-radius.js";
 export {
+  detectAnomalies,
+  createBehavioralAnomalyScorer,
+  type BehavioralAnomalyOptions,
+} from "./anomaly/behavioral-baseline.js";
+export {
   fetchEntitlementGrants,
   daysBetween,
   type EntitlementGrant,

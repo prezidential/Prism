@@ -24,7 +24,8 @@ export type RiskScorerId =
   | "dormant-entitlement"
   | "agent-scope-deviation"
   | "entitlement-overlap"
-  | "blast-radius";
+  | "blast-radius"
+  | "behavioral-anomaly";
 
 // A single risk finding about one identity, produced by one scorer.
 export interface RiskFinding {
