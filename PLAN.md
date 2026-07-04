@@ -104,7 +104,7 @@ npm run typecheck             # zero errors
 
 ---
 
-## Phase 3 — Risk Engine [IN PROGRESS]
+## Phase 3 — Risk Engine [DONE]
 
 **Weeks:** 5–7  
 **Primary Tool:** Claude Code (Agent Team)  
@@ -123,7 +123,7 @@ npm run typecheck             # zero errors
 - [x] Risk API data layer: `getRiskIdentities()` — identities sorted by risk score with contributing signals (`api/risk-identities.ts`). HTTP route `GET /api/v1/risk/identities` now delivered in the API layer (see Phase 5).
 - [x] Red-team scenario coverage — 31 unit + integration tests; `__tests__/evaluate.test.ts` exercises a graph that trips all five scorers end-to-end
 - [x] Real-time risk evaluation on ingest events — `RiskEvaluationConsumer` re-evaluates a tenant's risk on identity events, with per-tenant coalescing + DLQ (`packages/agents/src/risk/consumer.ts`, `npm run risk:consume`)
-- [ ] Anomaly detection: behavioral baseline per identity, deviation alerts — *deferred*
+- [x] Anomaly detection: behavioral baseline per identity, deviation alerts — `detectAnomalies` / `behavioral-anomaly` scorer (novel actions/targets, volume spike, elevated denials); integrated into `createDefaultScorers` (`anomaly/behavioral-baseline.ts`)
 
 ### Success Criteria
 ```bash
@@ -177,19 +177,27 @@ npm run mcp:serve                  # server boots on stdio
 
 ---
 
-## Phase 6 — Dashboard & UI [ ]
+## Phase 6 — Dashboard & UI [DONE]
 
 **Weeks:** 10–13  
 **Primary Tool:** Cursor Background Agents  
-**Branch:** `feature/phase-6-dashboard`
+**Branch:** `feature/phase-6-dashboard` (delivered on `claude/resume-from-docs-pra0xz`)
 
 ### Deliverables
-- [ ] React 18 dashboard
-- [ ] Identograph visualization (interactive graph)
-- [ ] Identity risk table with sorting/filtering
-- [ ] Agent scope view: declared intent vs. actual execution
-- [ ] Real-time alert feed
-- [ ] Demo-optimized 10-minute walkthrough flow
+- [x] React 18 dashboard (`packages/dashboard`, Vite; runs on demo data or the live risk API)
+- [x] Identograph visualization — interactive hand-rolled SVG graph, node size ∝ risk, click-to-trace access (`components/IdentographGraph.tsx`)
+- [x] Identity risk table with sorting + search/type/min-risk filtering (`components/RiskTable.tsx`, `lib/risk-table.ts`)
+- [x] Agent scope view: declared intent vs. actual execution, deviation gauge (`components/AgentScopeView.tsx`)
+- [x] Real-time alert feed — CAEP signals newest-first, severity-banded (`components/AlertFeed.tsx`, `lib/alerts.ts`)
+- [x] Demo-optimized walkthrough flow — guided tour driving views + focus (`components/Walkthrough.tsx`, `lib/walkthrough.ts`)
+- [x] Verified: dashboard `tsc` + `vite build` clean; 15 logic tests; Playwright build-and-render smoke drives every view in Chromium with zero console errors (ADR 0002)
+
+### Success Criteria
+```bash
+npm run typecheck                              # zero errors
+npx vitest run packages/dashboard              # 15 logic tests pass
+npm run build --workspace=packages/dashboard   # vite build succeeds
+```
 
 ---
 
